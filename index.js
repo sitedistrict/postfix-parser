@@ -27,6 +27,8 @@ var regex = {
     '(dsn)=([^,]+), ' +
     '(status)=(.*)$'
   ),
+  'smtp-client': /^(\S+): client=(\S+)\[(\S+?)\]/,
+
   'smtp-defer': new RegExp(
     '^(?:(' + postfixQidAny + '): )?' +
     '(?:host) ([^ ]+) ' +
@@ -44,6 +46,7 @@ var regex = {
     'host ([^ ]+) ' +
     '(?:said|refused to talk to me): (5[0-9]{2}.*)$'
   ),
+  'smtp-relay-denied': /^(\S+): (\w+): RCPT from (.*?)\[(\d+\.\d+\.\d+\.\d+)\]: (\d+) (\S+) <(.*?)>: Relay access denied; from=<(.*?)> to=<(.*?) proto=(\S+) helo=<(.*?)>/,
   'smtp-conn-err': /^connect to ([^ ]+): (.*)$/,
   'smtp-debug': new RegExp(
     '(?:(' + postfixQidAny + '): )?' +
@@ -233,6 +236,15 @@ function smtpAsObject (line) {
     };
   }
 
+  match = line.match(regex['smtp-client']);
+  if (match) {
+    return {
+      qid: match[1],
+      host: match[2],
+      ip: match[3]
+    };
+  }
+
   match = line.match(regex['smtp-defer']);
   if (match) {
     return {
@@ -240,6 +252,23 @@ function smtpAsObject (line) {
       qid: match[1],
       host: match[2],
       msg: match[3]
+    };
+  }
+  match = line.match(regex['smtp-relay-denied']);
+  //console.log(regex['smtp-relay-denied']);
+  //console.log(match);
+  if (match) {
+    return {
+      qid: match[1],
+      action: match[2], // reject
+      host: match[3],
+      ip: match[4],
+      ver: match[5],
+      smtp_from: match[6],
+      from: match[7],
+      to: match[8],
+      proto: match[9],
+      helo: match[10]
     };
   }
 
