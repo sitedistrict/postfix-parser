@@ -2,9 +2,11 @@
 var logger = require('./lib/logger');
 
 var envEmailAddr   = '<?([^>,]*)>?';
-var postfixQid     = '[0-9A-F]{10,11}';     // default queue ids
+//var postfixQid     = '[0-9A-F]{10,11}';     // default queue ids
+var postfixQid     = '[0-9A-F]+';     // default queue ids
 var postfixQidLong = '[0-9A-Za-z]{14,16}';  // optional 'long' ids
-var postfixQidAny  = postfixQidLong + '|' + postfixQid;
+var postfixNoQid = 'NOQUEUE';
+var postfixQidAny  = postfixQidLong + '|' + postfixQid + '|' + postfixNoQid;
 
 var regex = {
   syslog: /^([A-Za-z]{3} [0-9 ]{2} [\d:]{8}) ([^\s]+) ([^[]+)\[([\d]+)\]: (.*)$/,
@@ -160,6 +162,7 @@ exports.asObjectType = function (type, line) {
     case 'submission/smtpd':
       return argAsObject(type, line);
     case 'smtp':
+    case 'smtpd':
       return smtpAsObject(line);
     case 'bounce':
       return bounceAsObject(line);
