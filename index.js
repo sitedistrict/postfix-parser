@@ -58,6 +58,8 @@ var regex = {
     'conversation with |' +
     'host )'
   ),
+  'smtp-header': /^(\S+): warning: header (\S+): (.*?) from \S+\[\d+\.\d+\.\d+\.\d+\];/,
+
   qmgr: new RegExp(
     '^(?:(' + postfixQidAny + '): )?' +
     '(from)=' + envEmailAddr + ', ' +
@@ -70,7 +72,7 @@ var regex = {
   ),
   'qmgr-retry': new RegExp('^(' + postfixQidAny + '): (removed)'),
   // postfix sometimes truncates the message-id, so don't require ending >
-  cleanup: new RegExp(
+  'message-id': new RegExp(
     '^(?:(' + postfixQidAny + '): )?' +
     '((?:resent-)?message-id)=<(.*?)>?$'
   ),
@@ -169,6 +171,8 @@ exports.asObjectType = function (type, line) {
       return smtpAsObject(line);
     case 'bounce':
       return bounceAsObject(line);
+    case 'cleanup':
+      return cleanupAsObject(line);
   }
 
   var match = line.match(regex[type]);
@@ -221,6 +225,26 @@ function argAsObject (thing, line) {
 
   match = line.match(regex[thing + '-retry']);
   if (match) return { qid: match[1], msg: match[2] };
+}
+
+function cleanupAsObject (line) {
+  var match = line.match(regex['smtp-header']);
+  if (match) {
+    obj = {
+      qid: match[1]
+    }
+    obj[match[2].toLowerCase()] = match[3];
+    return obj;
+  }
+
+  var match = line.match(regex['message-id']);
+  if (match) {
+    return {
+      qid: match[1],
+      message_id: match[3],
+    };
+  }
+  return { msg: match[0] };
 }
 
 function smtpAsObject (line) {
