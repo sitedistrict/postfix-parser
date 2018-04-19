@@ -244,6 +244,7 @@ function cleanupAsObject (line) {
       message_id: match[3],
     };
   }
+  if (!match) return;
   return { msg: match[0] };
 }
 
